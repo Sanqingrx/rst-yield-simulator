@@ -1,11 +1,13 @@
 import streamlit as st
 import requests
 import numpy as np
-import pandas as pd
-import plotly.express as px
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import time
 
-# Streamlit Configurations
+plt.rcParams['font.sans-serif'] = ['SimHei']
+plt.rcParams['axes.unicode_minus'] = False
+
 st.set_page_config(page_title="RST 质押收益模拟器", layout="centered")
 
 # === Preferences ===
@@ -35,6 +37,14 @@ st.markdown(f"""
         background-color: {'#ffffff' if theme == 'light' else '#0e1117'};
         color: {'#000000' if theme == 'light' else '#f0f0f0'};
     }}
+    .stButton>button {{
+        background-color: {'#f0f0f0' if theme == 'light' else '#2e2e2e'};
+        color: {'#000000' if theme == 'light' else '#ffffff'};
+    }}
+    .stNumberInput input, .stSlider {{
+        background-color: {'#ffffff' if theme == 'light' else '#1c1c1c'};
+        color: {'#000000' if theme == 'light' else '#f0f0f0'};
+    }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -43,6 +53,21 @@ def T(zh, en):
     return zh if lang == 'zh' else en
 
 st.title(T("📊 RST 质押收益模拟器", "📊 RST Yield Simulator"))
+
+st.markdown(T("""
+**📢 邀请说明：** [点击此处注册并支持我](https://realtyx.co/invite/3Jv6Nt)（老用户手动填写邀请码：3Jv6Nt）
+
+通过我链接注册，为促进 RST 销量，我愿意将顶级代理人佣金（5%）全部返还给受邀人。
+请通过 Telegram 或微信联系我登记邮箱和钱包地址。
+TG：[@sanqing_web3](https://t.me/sanqing_web3) / 微信号：`sanqing_web3`
+""",
+"""
+**📢 Invitation Info:** [Click here to register and support me](https://realtyx.co/invite/3Jv6Nt) (For existing users, fill in code: 3Jv6Nt)
+
+I will refund 5% top-level agent commission to invitees.
+Contact me via Telegram or WeChat to register your email and wallet.
+TG: [@sanqing_web3](https://t.me/sanqing_web3) / WeChat ID: `sanqing_web3`
+"""))
 
 # === Constants ===
 RST_PRICE = 50
@@ -56,8 +81,6 @@ TOKEN_CONTRACT = '0xDbf9F254C365ABe4294884d1249c7a2388f70911'
 INVENTORY_ADDRESS = '0x3B51273c79B68E7cc09bc69605A7e7C650A94943'
 STAKE_ADDRESS = '0x1E604c5d206c98B5dbC5b41e37b56451acD26578'
 
-# === Helper Functions ===
-@st.cache_data(ttl=60)  # Cache data for 60 seconds
 def get_rst_balance(address):
     url = "https://api.basescan.org/api"
     params = {
@@ -74,7 +97,7 @@ def get_rst_balance(address):
         st.warning(f"❌ {T('获取余额失败', 'Failed to fetch balance')}: {e}")
         return None
 
-# === Fetch Data Section ===
+# === Live Fetch ===
 st.subheader(T("📡 实时获取库存和质押数量", "📡 Fetch Real-Time Inventory & Stake"))
 
 cooldown = 5
@@ -93,7 +116,9 @@ if st.button(T("🔄 获取实时数据", "🔄 Get Real-Time Data")):
 
 remaining = int(cooldown - (now - st.session_state['last_fetch']))
 if remaining > 0:
-    st.info(f"⏳ {T('距离下次可刷新还有', 'Next refresh in')} {remaining} {T('秒', 's')}")
+    st.toast(f"⏳ {T('距离下次可刷新还有', 'Next refresh in')} {remaining} {T('秒', 's')}", icon="⏳")
+    time.sleep(1)
+    st.rerun()
 
 # === Inputs ===
 col1, col2 = st.columns(2)
@@ -109,8 +134,7 @@ stake_range = st.slider(
     value=(20, min(stake_max, 150)), step=5
 )
 
-# === Calculation ===
-stake_values = np.linspace(stake_range[0], stake_range[1], num=100)
+stake_values = np.arange(stake_range[0], stake_range[1] + 1, 1)
 daily_pool = inventory * RST_PRICE * FIXED_APY / 365
 
 curve_daily = daily_pool / stake_values
@@ -126,22 +150,41 @@ view_option = st.radio(T("📈 图表内容显示", "📈 Chart Mode"), [
 ])
 
 # === Plot ===
-df = pd.DataFrame({
-    T("质押总量（RST）", "Total Staked RST"): stake_values,
-    T("每日收益（USDC）", "Daily Reward (USDC)"): curve_daily,
-    T("年化收益率（%）", "Annualized Yield (%)"): curve_apy
-})
-
+fig, ax = plt.subplots()
 if view_option.startswith("单") or view_option.startswith("Daily"):
-    fig = px.line(df, x=T("质押总量（RST）", "Total Staked RST"), y=T("每日收益（USDC）", "Daily Reward (USDC)"),
-                  title=T("RST 收益模拟曲线", "RST Yield Curve"))
+    ax.plot(stake_values, curve_daily, label=T("模拟每日收益", "Simulated Daily"), color='skyblue')
+    ax.scatter([staked_now], [dot_daily], color='blue', label=T('当前质押', 'Current Stake'))
+    ax.axvline(x=staked_now, color='gray', linestyle='dashed')
+    ax.axhline(y=dot_daily, color='gray', linestyle='dashed')
+    ax.text(staked_now, ax.get_ylim()[0], f"{staked_now:.0f} RST", ha='center', va='bottom', fontsize=9)
+    ax.text(ax.get_xlim()[0], dot_daily, f"{dot_daily:.4f} USDC", va='center', ha='left', fontsize=9)
+    ax.set_ylabel(T("每日收益（USDC）", "Daily Reward (USDC)"))
 else:
-    fig = px.line(df, x=T("质押总量（RST）", "Total Staked RST"), y=T("年化收益率（%）", "Annualized Yield (%)"),
-                  title=T("RST 收益模拟曲线", "RST Yield Curve"))
+    ax.plot(stake_values, curve_apy, label=T("模拟年化收益率", "Simulated APY"), color='orange')
+    ax.scatter([staked_now], [dot_apy], color='red', label=T('当前质押', 'Current Stake'))
+    ax.axvline(x=staked_now, color='gray', linestyle='dashed')
+    ax.axhline(y=dot_apy, color='gray', linestyle='dashed')
+    ax.text(staked_now, ax.get_ylim()[0], f"{staked_now:.0f} RST", ha='center', va='bottom', fontsize=9)
+    ax.text(ax.get_xlim()[0], dot_apy, f"{dot_apy:.2f}%", va='center', ha='left', fontsize=9)
+    ax.set_ylabel(T("年化收益率（%）", "Annualized Yield (%)"))
 
-st.plotly_chart(fig)
+ax.set_xlabel(T("质押总量（RST）", "Total Staked RST"))
+ax.set_title(T("RST 收益模拟曲线", "RST Yield Curve"))
+ax.legend()
+ax.grid(True)
+ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+st.pyplot(fig)
 
 st.markdown(f"**📌 {T('每日总奖池', 'Total Daily Pool')}:** {daily_pool:.4f} USDC")
 st.markdown(f"**📌 {T('当前质押', 'Current Staked')}:** {staked_now:.0f} RST")
 st.markdown(f"**📌 {T('当前单RST每日收益', 'Daily per RST')}:** {dot_daily:.4f} USDC")
 st.markdown(f"**📌 {T('当前年化收益率', 'Current APY')}:** {dot_apy:.2f}%")
+
+# === Address Info ===
+st.subheader(T("📄 合约与地址说明", "📄 Contract Info"))
+st.markdown(f"""
+- **RST {T('合约地址', 'Token Contract')}**：`{TOKEN_CONTRACT}`
+- **{T('库存地址', 'Inventory Address')}**：`{INVENTORY_ADDRESS}`
+- **{T('质押地址', 'Staking Address')}**：`{STAKE_ADDRESS}`
+- ⚠️ {T('实时数据获取受限于 Basescan 免费 API，如遇失败请重试。', 'Real-time data via free Basescan API, retry if fails.')}
+""")
