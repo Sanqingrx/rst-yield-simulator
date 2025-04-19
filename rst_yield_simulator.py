@@ -59,15 +59,17 @@ def T(zh, en):
 
 st.title(T("📊 RST 质押收益模拟器", "📊 RST Yield Simulator"))
 
-st.markdown(T("""**📢 邀请说明：** [点击此处注册并支持我](https://realtyx.co/invite/3Jv6Nt)（老用户手动填写邀请码：3Jv6Nt）
+sst.markdown(T("""**📢 邀请说明：** [点击此处注册并支持我](https://realtyx.co/invite/3Jv6Nt)（老用户手动填写邀请码：3Jv6Nt）
 
-通过我链接注册，为促进 RST 销量，我愿意将顶级代理人佣金（5%）全部返还给受邀人。  
+为促进 RST 销量，我愿意将顶级代理人佣金（5%）全部返还给受邀人。  
 请通过 Telegram 或微信联系我登记邮箱和钱包地址：  
 TG：[@sanqing_web3](https://t.me/sanqing_web3) / 微信号：`sanqing_web3`""",
-"""**📢 Invitation Info:** [Click here to register and support me](https://realtyx.co/invite/3Jv6Nt)  
-I will refund 5% top-level agent commission to invitees.  
-Contact me via Telegram or WeChat to register:  
+"""**📢 Invitation Info:** [Click here to register and support me](https://realtyx.co/invite/3Jv6Nt) (If you're an existing user, please manually enter the invitation code: **3Jv6Nt**)
+
+To boost RST adoption, I’m happy to **refund the full 5% top-level agent commission** to everyone who signs up through my link.  
+Please contact me via **Telegram or WeChat** to register your email and wallet address:  
 TG: [@sanqing_web3](https://t.me/sanqing_web3) / WeChat ID: `sanqing_web3`"""))
+
 
 # === 常量定义 ===
 RST_PRICE = 50
