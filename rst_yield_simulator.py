@@ -59,7 +59,7 @@ def T(zh, en):
 
 st.title(T("📊 RST 质押收益模拟器", "📊 RST Yield Simulator"))
 
-sst.markdown(T("""**📢 邀请说明：** [点击此处注册并支持我](https://realtyx.co/invite/3Jv6Nt)（老用户手动填写邀请码：3Jv6Nt）
+st.markdown(T("""**📢 邀请说明：** [点击此处注册并支持我](https://realtyx.co/invite/3Jv6Nt)（老用户手动填写邀请码：3Jv6Nt）
 
 为促进 RST 销量，我愿意将顶级代理人佣金（5%）全部返还给受邀人。  
 请通过 Telegram 或微信联系我登记邮箱和钱包地址：  
