@@ -4,8 +4,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import time
+from matplotlib import font_manager
+import os
 
-plt.rcParams['font.sans-serif'] = ['SimHei']
+# === 字体设置：加载本地 SimHei.ttf 字体文件 ===
+font_path = os.path.join(os.path.dirname(__file__), "SimHei.ttf")
+my_font = font_manager.FontProperties(fname=font_path)
+plt.rcParams['font.family'] = my_font.get_name()
 plt.rcParams['axes.unicode_minus'] = False
 
 st.set_page_config(page_title="RST 质押收益模拟器", layout="centered")
@@ -175,6 +180,7 @@ ax.grid(True)
 ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 st.pyplot(fig)
 
+# === Metrics ===
 st.markdown(f"**📌 {T('每日总奖池', 'Total Daily Pool')}:** {daily_pool:.4f} USDC")
 st.markdown(f"**📌 {T('当前质押', 'Current Staked')}:** {staked_now:.0f} RST")
 st.markdown(f"**📌 {T('当前单RST每日收益', 'Daily per RST')}:** {dot_daily:.4f} USDC")
