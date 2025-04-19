@@ -4,18 +4,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import time
-from matplotlib import font_manager
+import matplotlib
 import os
 
-# === 字体设置：加载本地 SimHei.ttf 字体文件 ===
+# 加载本地 SimHei 字体用于中文显示
 font_path = os.path.join(os.path.dirname(__file__), "SimHei.ttf")
-my_font = font_manager.FontProperties(fname=font_path)
-plt.rcParams['font.family'] = my_font.get_name()
+matplotlib.font_manager.fontManager.addfont(font_path)
+plt.rcParams["font.family"] = "SimHei"
 plt.rcParams['axes.unicode_minus'] = False
 
 st.set_page_config(page_title="RST 质押收益模拟器", layout="centered")
 
-# === Preferences ===
+# === 用户偏好 ===
 if 'lang' not in st.session_state:
     st.session_state['lang'] = 'zh'
 if 'theme' not in st.session_state:
@@ -24,7 +24,7 @@ if 'theme' not in st.session_state:
 lang = st.session_state['lang']
 theme = st.session_state['theme']
 
-# === Language and Theme Toggle ===
+# === 中英文切换 + 主题切换按钮 ===
 col_lang, col_theme = st.columns([1, 1])
 with col_lang:
     if st.button("Switch to English" if lang == 'zh' else "切换为中文"):
@@ -35,7 +35,7 @@ with col_theme:
         st.session_state['theme'] = 'dark' if theme == 'light' else 'light'
         st.rerun()
 
-# === Style based on theme ===
+# === 页面样式自定义 ===
 st.markdown(f"""
     <style>
     .stApp {{
@@ -53,34 +53,29 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# === Translation Helper ===
+# === 翻译函数 ===
 def T(zh, en):
     return zh if lang == 'zh' else en
 
 st.title(T("📊 RST 质押收益模拟器", "📊 RST Yield Simulator"))
 
-st.markdown(T("""
-**📢 邀请说明：** [点击此处注册并支持我](https://realtyx.co/invite/3Jv6Nt)（老用户手动填写邀请码：3Jv6Nt）
+st.markdown(T("""**📢 邀请说明：** [点击此处注册并支持我](https://realtyx.co/invite/3Jv6Nt)（老用户手动填写邀请码：3Jv6Nt）
 
-通过我链接注册，为促进 RST 销量，我愿意将顶级代理人佣金（5%）全部返还给受邀人。
-请通过 Telegram 或微信联系我登记邮箱和钱包地址。
-TG：[@sanqing_web3](https://t.me/sanqing_web3) / 微信号：`sanqing_web3`
-""",
-"""
-**📢 Invitation Info:** [Click here to register and support me](https://realtyx.co/invite/3Jv6Nt) (For existing users, fill in code: 3Jv6Nt)
+通过我链接注册，为促进 RST 销量，我愿意将顶级代理人佣金（5%）全部返还给受邀人。  
+请通过 Telegram 或微信联系我登记邮箱和钱包地址：  
+TG：[@sanqing_web3](https://t.me/sanqing_web3) / 微信号：`sanqing_web3`""",
+"""**📢 Invitation Info:** [Click here to register and support me](https://realtyx.co/invite/3Jv6Nt)  
+I will refund 5% top-level agent commission to invitees.  
+Contact me via Telegram or WeChat to register:  
+TG: [@sanqing_web3](https://t.me/sanqing_web3) / WeChat ID: `sanqing_web3`"""))
 
-I will refund 5% top-level agent commission to invitees.
-Contact me via Telegram or WeChat to register your email and wallet.
-TG: [@sanqing_web3](https://t.me/sanqing_web3) / WeChat ID: `sanqing_web3`
-"""))
-
-# === Constants ===
+# === 常量定义 ===
 RST_PRICE = 50
 FIXED_APY = 8.01 / 100
 TOKEN_DECIMALS = 10 ** 18
 TOTAL_RST = 6386
 
-# === Config ===
+# === 读取实时数据 ===
 API_KEY = 'XPM3YSMFXYPZRWJMHWNKD2XNU5699U3MTY'
 TOKEN_CONTRACT = '0xDbf9F254C365ABe4294884d1249c7a2388f70911'
 INVENTORY_ADDRESS = '0x3B51273c79B68E7cc09bc69605A7e7C650A94943'
@@ -102,7 +97,7 @@ def get_rst_balance(address):
         st.warning(f"❌ {T('获取余额失败', 'Failed to fetch balance')}: {e}")
         return None
 
-# === Live Fetch ===
+# === 实时获取按钮 ===
 st.subheader(T("📡 实时获取库存和质押数量", "📡 Fetch Real-Time Inventory & Stake"))
 
 cooldown = 5
@@ -125,7 +120,7 @@ if remaining > 0:
     time.sleep(1)
     st.rerun()
 
-# === Inputs ===
+# === 输入区块 ===
 col1, col2 = st.columns(2)
 with col1:
     inventory = st.number_input(T("📦 库存 RST 数量", "📦 RST Inventory"), value=st.session_state.get('inventory', 5321.54), step=1.0)
@@ -141,7 +136,6 @@ stake_range = st.slider(
 
 stake_values = np.arange(stake_range[0], stake_range[1] + 1, 1)
 daily_pool = inventory * RST_PRICE * FIXED_APY / 365
-
 curve_daily = daily_pool / stake_values
 curve_apy = (curve_daily / RST_PRICE) * 365 * 100
 
@@ -154,7 +148,7 @@ view_option = st.radio(T("📈 图表内容显示", "📈 Chart Mode"), [
     T("质押年化收益率（%）", "Annual Yield (%)")
 ])
 
-# === Plot ===
+# === 绘图 ===
 fig, ax = plt.subplots()
 if view_option.startswith("单") or view_option.startswith("Daily"):
     ax.plot(stake_values, curve_daily, label=T("模拟每日收益", "Simulated Daily"), color='skyblue')
@@ -180,13 +174,13 @@ ax.grid(True)
 ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 st.pyplot(fig)
 
-# === Metrics ===
+# === 当前收益展示 ===
 st.markdown(f"**📌 {T('每日总奖池', 'Total Daily Pool')}:** {daily_pool:.4f} USDC")
 st.markdown(f"**📌 {T('当前质押', 'Current Staked')}:** {staked_now:.0f} RST")
 st.markdown(f"**📌 {T('当前单RST每日收益', 'Daily per RST')}:** {dot_daily:.4f} USDC")
 st.markdown(f"**📌 {T('当前年化收益率', 'Current APY')}:** {dot_apy:.2f}%")
 
-# === Address Info ===
+# === 合约信息 ===
 st.subheader(T("📄 合约与地址说明", "📄 Contract Info"))
 st.markdown(f"""
 - **RST {T('合约地址', 'Token Contract')}**：`{TOKEN_CONTRACT}`
